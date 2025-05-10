@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel – CyberIntruder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      background: #0A0F24;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 40px;
+    }
+    h1, h2 {
+      color: #00E0FF;
+      text-align: center;
+    }
+    .summary {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    table {
+      width: 100%;
+      max-width: 900px;
+      margin: auto;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #333;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #111630;
+    }
+    .logout {
+      text-align: center;
+      margin: 20px;
+      color: #14C9C9;
+      cursor: pointer;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>CyberIntruder Admin Panel</h1>
+  <div class="summary" id="metrics">Loading metrics...</div>
+  <h2>All Scan Requests</h2>
+  <table id="scanTable">
+    <thead>
+      <tr><th>ID</th><th>Domain</th><th>User ID</th><th>Created At</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <div class="logout" onclick="logout()">Logout</div>
+
+  <script>
+    const ADMIN_EMAIL = 'youremail@domain.com';
+    const supabase = supabase.createClient('https://pjhwzohfjcjrddjfeecb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqaHd6b2hmamNqcmRkamZlZWNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4NDUwMDgsImV4cCI6MjA2MjQyMTAwOH0.d-eai-fYWKHcsKgRgBkfXvLEi5yQ7WVIi9eIPTzTbho');
+
+    async function checkAdmin() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !session.user || session.user.email !== ADMIN_EMAIL) {
+        document.body.innerHTML = '<h2 style="text-align:center;color:red;">Access denied.</h2>';
+        return;
+      }
+      loadMetrics();
+      loadScanRequests();
+    }
+
+    async function loadMetrics() {
+      const users = await supabase.from('users').select('*');
+      const scans = await supabase.from('scan_requests').select('*');
+      const playbooks = await supabase.from('playbooks').select('*');
+
+      document.getElementById('metrics').innerHTML = `
+        <strong>Users:</strong> ${users.data.length} |
+        <strong>Scans:</strong> ${scans.data.length} |
+        <strong>Playbooks:</strong> ${playbooks.data.length}
+      `;
+    }
+
+    async function loadScanRequests() {
+      const { data } = await supabase.from('scan_requests').select('*').order('created_at', { ascending: false });
+      const tbody = document.querySelector("#scanTable tbody");
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        tbody.innerHTML += `<tr>
+          <td>${row.id}</td>
+          <td>${row.domain}</td>
+          <td>${row.user_id || 'anonymous'}</td>
+          <td>${new Date(row.created_at).toLocaleString()}</td>
+        </tr>`;
+      });
+    }
+
+    async function logout() {
+      await supabase.auth.signOut();
+      window.location.href = 'auth.html';
+    }
+
+    checkAdmin();
+  </script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IRBuilder – Save & Load Playbooks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      background: #0A0F24;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 40px;
+    }
+    h1 {
+      text-align: center;
+      color: #00E0FF;
+    }
+    input, textarea {
+      width: 100%;
+      max-width: 500px;
+      margin: 10px auto;
+      display: block;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #14C9C9;
+      color: #0A0F24;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      display: block;
+      margin: 10px auto;
+    }
+    .message {
+      text-align: center;
+      margin: 10px;
+      color: #00E0FF;
+    }
+    .playbook {
+      background: #111630;
+      padding: 15px;
+      margin: 10px auto;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 600px;
+    }
+  </style>
+</head>
+<body>
+  <h1>IRBuilder – Incident Response Playbooks</h1>
+
+  <div class="message" id="welcome"></div>
+
+  <input type="text" id="title" placeholder="Playbook Title">
+  <textarea id="content" rows="5" placeholder="Enter playbook content here..."></textarea>
+  <button onclick="savePlaybook()">Save Playbook</button>
+  <div class="message" id="saveMsg"></div>
+
+  <h2>Saved Playbooks</h2>
+  <div id="playbookList"></div>
+
+  <script>
+    const supabase = supabase.createClient('https://pjhwzohfjcjrddjfeecb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqaHd6b2hmamNqcmRkamZlZWNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4NDUwMDgsImV4cCI6MjA2MjQyMTAwOH0.d-eai-fYWKHcsKgRgBkfXvLEi5yQ7WVIi9eIPTzTbho');
+
+    async function checkUser() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !session.user) {
+        document.body.innerHTML = '<h2 style="text-align:center;color:red;">Please login first.</h2>';
+        return;
+      }
+      document.getElementById('welcome').textContent = 'Logged in as: ' + session.user.email;
+      loadPlaybooks(session.user.id);
+    }
+
+    async function savePlaybook() {
+      const title = document.getElementById('title').value;
+      const content = document.getElementById('content').value;
+      const { data: { session } } = await supabase.auth.getSession();
+      const user_id = session.user.id;
+
+      const { error } = await supabase
+        .from('playbooks')
+        .insert([{ title: title, content: content, user_id: user_id }]);
+
+      document.getElementById('saveMsg').textContent = error ? error.message : "Playbook saved!";
+      if (!error) loadPlaybooks(user_id);
+    }
+
+    async function loadPlaybooks(user_id) {
+      const { data, error } = await supabase
+        .from('playbooks')
+        .select('*')
+        .eq('user_id', user_id)
+        .order('created_at', { ascending: false });
+
+      const list = document.getElementById('playbookList');
+      list.innerHTML = "";
+      if (data) {
+        data.forEach(pb => {
+          list.innerHTML += `<div class='playbook'><strong>${pb.title}</strong><br><pre>${pb.content}</pre></div>`;
+        });
+      }
+    }
+
+    checkUser();
+  </script>
+</body>
+</html>

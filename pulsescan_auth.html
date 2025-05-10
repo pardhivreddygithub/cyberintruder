@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PulseScan – Authenticated Domain Scanner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0A0F24;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+        header, footer {
+            background-color: #0D122B;
+            padding: 20px;
+            text-align: center;
+        }
+        header h1 {
+            font-size: 2.2em;
+            color: #00E0FF;
+            margin: 0;
+        }
+        .logout {
+            color: #14C9C9;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .content {
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .content h2 {
+            font-size: 1.8em;
+            color: #14C9C9;
+        }
+        .content p {
+            max-width: 700px;
+            margin: 20px auto;
+            font-size: 1.1em;
+        }
+        .input-section {
+            margin-top: 30px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: 300px;
+            border-radius: 6px;
+            border: none;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #14C9C9;
+            color: #0A0F24;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        .message {
+            margin-top: 20px;
+            color: #00E0FF;
+        }
+        a.back-link {
+            display: block;
+            margin-top: 40px;
+            color: #14C9C9;
+            font-size: 0.95em;
+        }
+    </style>
+    <script>
+        const supabase = supabase.createClient('https://pjhwzohfjcjrddjfeecb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqaHd6b2hmamNqcmRkamZlZWNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4NDUwMDgsImV4cCI6MjA2MjQyMTAwOH0.d-eai-fYWKHcsKgRgBkfXvLEi5yQ7WVIi9eIPTzTbho');
+
+        async function checkUser() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session || !session.user) {
+                document.body.innerHTML = '<h2 style="text-align:center;color:red;">Please login first.</h2>';
+                return;
+            }
+            document.getElementById('welcome').textContent = 'Logged in as: ' + session.user.email;
+        }
+
+        async function submitScan() {
+            const domainInput = document.getElementById('domain');
+            const message = document.getElementById('message');
+            const domain = domainInput.value.trim();
+
+            if (!domain) {
+                message.textContent = "Please enter a domain or email.";
+                return;
+            }
+
+            const { data: { session } } = await supabase.auth.getSession();
+            const user_id = session?.user?.id;
+
+            const { error } = await supabase
+                .from('scan_requests')
+                .insert([{ domain: domain, user_id: user_id }]);
+
+            if (error) {
+                message.textContent = "Error submitting scan request.";
+                console.error(error);
+            } else {
+                message.textContent = "Scan request submitted successfully!";
+                domainInput.value = "";
+            }
+        }
+
+        async function logout() {
+            await supabase.auth.signOut();
+            window.location.href = 'auth.html';
+        }
+
+        checkUser();
+    </script>
+</head>
+<body>
+    <header>
+        <h1>CyberIntruder</h1>
+        <div class="logout" onclick="logout()">Logout</div>
+    </header>
+    <section class="content">
+        <div class="message" id="welcome"></div>
+        <h2>PulseScan – Domain Security Scanner</h2>
+        <p>Scan your domain for open ports, DNS issues, exposed credentials and more. Get a security score instantly and track improvements over time.</p>
+
+        <div class="input-section">
+            <input type="text" id="domain" placeholder="Enter your domain or email">
+            <button onclick="submitScan()">Submit</button>
+        </div>
+        <div class="message" id="message"></div>
+
+        <a href="cyberintruder_landing_final.html" class="back-link">← Back to Home</a>
+    </section>
+    <footer>
+        <p>&copy; 2025 CyberIntruder. All rights reserved.</p>
+    </footer>
+</body>
+</html>

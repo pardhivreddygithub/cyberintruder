@@ -1,0 +1,67 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Realtime Dashboard – CyberIntruder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      background: #0A0F24;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 40px;
+    }
+    h1 {
+      color: #00E0FF;
+      text-align: center;
+    }
+    .feed {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      border-radius: 8px;
+      background: #111630;
+    }
+    .event {
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #141B3A;
+      border-left: 4px solid #14C9C9;
+    }
+    .timestamp {
+      color: #14C9C9;
+      font-size: 0.85em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Realtime Scan Feed</h1>
+  <div class="feed" id="feed">Listening for scan events...</div>
+
+  <script>
+    const supabase = supabase.createClient('https://pjhwzohfjcjrddjfeecb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqaHd6b2hmamNqcmRkamZlZWNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4NDUwMDgsImV4cCI6MjA2MjQyMTAwOH0.d-eai-fYWKHcsKgRgBkfXvLEi5yQ7WVIi9eIPTzTbho');
+
+    const feed = document.getElementById('feed');
+
+    supabase.channel('realtime-scans')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'scan_requests' },
+        payload => {
+          const scan = payload.new;
+          const timestamp = new Date(scan.created_at).toLocaleTimeString();
+          const entry = `
+            <div class='event'>
+              <div><strong>Domain:</strong> ${scan.domain}</div>
+              <div class='timestamp'>${timestamp}</div>
+            </div>
+          `;
+          feed.innerHTML = entry + feed.innerHTML;
+        }
+      )
+      .subscribe();
+  </script>
+</body>
+</html>

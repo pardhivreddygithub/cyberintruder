@@ -1,0 +1,65 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login / Signup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      background: #0A0F24;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+    input {
+      padding: 10px;
+      margin: 10px;
+      border-radius: 5px;
+      width: 250px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      background: #14C9C9;
+      color: #0A0F24;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .message {
+      margin-top: 20px;
+      color: #00E0FF;
+    }
+  </style>
+</head>
+<body>
+  <h1>CyberIntruder Login / Signup</h1>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+  <button onclick="signup()">Signup</button>
+  <div class="message" id="message"></div>
+
+  <script>
+    const supabase = supabase.createClient('https://pjhwzohfjcjrddjfeecb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqaHd6b2hmamNqcmRkamZlZWNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4NDUwMDgsImV4cCI6MjA2MjQyMTAwOH0.d-eai-fYWKHcsKgRgBkfXvLEi5yQ7WVIi9eIPTzTbho');
+
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      document.getElementById('message').textContent = error ? error.message : "Logged in!";
+      if (!error) setTimeout(() => window.location.href = 'irbuilder_auth.html', 1000);
+    }
+
+    async function signup() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      document.getElementById('message').textContent = error ? error.message : "Signup successful! Please check your email to confirm.";
+    }
+  </script>
+</body>
+</html>
